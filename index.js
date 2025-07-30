@@ -6,9 +6,9 @@ const DEFAULT_PORT = 8080;
 
 // Create a local server to receive data from
 const server = http.createServer((req, res) => {
+  let filePath;
   if (VALID_URLS.includes(req.url)) {
     res.writeHead(200, { "Content-Type": "text/html" });
-    let filePath;
     switch (req.url) {
       case "/":
         filePath = "index.html";
@@ -20,14 +20,22 @@ const server = http.createServer((req, res) => {
         filePath = "contact-me.html";
         break;
     }
-    fs.readFile(filePath, "utf8", (err, data) => {
-      if (err) {
-        console.error(err);
-        return;
-      }
-      res.end(data);
-    });
+  } else if (req.url === "/styles.css") {
+    const fileStream = fs.createReadStream("styles.css", "UTF-8");
+    res.writeHead(200, { "Content-Type": "text/css" });
+    fileStream.pipe(res);
+    return;
+  } else {
+    res.writeHead(404, { "Content-Type": "text/html" });
+    filePath = "404.html";
   }
+  fs.readFile(filePath, "utf8", (err, data) => {
+    if (err) {
+      console.error(err);
+      return;
+    }
+    res.write(data);
+  });
 });
 
 server.listen(DEFAULT_PORT, () => {
